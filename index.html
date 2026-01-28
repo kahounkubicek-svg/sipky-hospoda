@@ -40,7 +40,7 @@
 <body>
 
 <nav>
-    <span onclick="showView('setupView')" id="nav-setup">⚙️ Týmy</span>
+    <span onclick="showView('setupView')" id="nav-setup" class="active-tab">⚙️ Týmy</span>
     <span onclick="showView('playView')" id="nav-play">🎯 Turnaj</span>
     <span onclick="showView('historyView')" id="nav-history">📊 Žebříček</span>
     <span onclick="showView('archiveView')" id="nav-archive">📜 Historie</span>
@@ -136,6 +136,14 @@
         document.getElementById('tName').value = ''; document.getElementById('pNames').value = '';
     };
 
+    window.addPlayerToTeam = (teamIdx) => {
+        const name = document.getElementById(`newPlayer_${teamIdx}`).value.trim();
+        if (name) { window.db[teamIdx].players.push(name); syncAll(); }
+    };
+
+    window.removePlayer = (tI, pI) => { if(confirm("Odstranit?")) { window.db[tI].players.splice(pI, 1); syncAll(); } };
+    window.deleteTeam = (i) => { if(confirm("Smazat tým?")) { window.db.splice(i,1); syncAll(); } };
+
     window.renderDB = () => {
         document.getElementById('dbList').innerHTML = window.db.map((t, i) => `
             <div style="border-bottom: 1px solid #222; padding:15px;">
@@ -146,8 +154,6 @@
                 <div style="margin-top:5px; color:#888; font-size:0.8rem;">${t.players.join(', ')}</div>
             </div>`).join('');
     };
-
-    window.deleteTeam = (i) => { if(confirm("Smazat tým?")) { window.db.splice(i,1); syncAll(); } };
 
     window.renderAttendance = () => {
         document.getElementById('attendanceList').innerHTML = window.db.flatMap(team => team.players.map(p => `
@@ -220,7 +226,6 @@
     };
 
     function pushLiveUpdate() {
-        // Odesíláme aktuální stav turnaje do "liveMatch" uzlu
         set(ref(fdb, 'darts_v15/liveMatch'), {
             title: window.tourney.title,
             results: window.tourney.players,
@@ -228,6 +233,7 @@
         });
     }
 
+    // !!! OPRAVENÁ FUNKCE UKONČENÍ TURNAJE (ŘEŠÍ TVŮJ PROBLÉM) !!!
     window.handleNext = () => {
         if(window.tourney.round < 3) { 
             window.tourney.round++; 
@@ -235,15 +241,27 @@
         } else {
             if(!confirm("Ukončit celý turnaj a uložit do historie?")) return;
             
-            // Uložení do historie
-            window.historyData.push({ id: Date.now(), title: window.tourney.title, date: new Date().toLocaleDateString(), results: [...window.tourney.players] });
+            // 1. Přidat do lokální historie
+            window.historyData.push({ 
+                id: Date.now(), 
+                title: window.tourney.title, 
+                date: new Date().toLocaleDateString(), 
+                results: [...window.tourney.players] 
+            });
             
-            // Vypnutí live statusu
+            // 2. Vypnout live status v DB
             update(ref(fdb, 'darts_v15/status'), { active: false });
             set(ref(fdb, 'darts_v15/liveMatch'), null);
             
-            syncAll(); 
-            location.reload();
+            // 3. Uložit historii do DB a POČKAT na potvrzení
+            set(ref(fdb, 'darts_v15/history'), window.historyData)
+                .then(() => {
+                    alert("Turnaj byl úspěšně uložen!");
+                    location.reload(); // Až teď obnovíme stránku
+                })
+                .catch((error) => {
+                    alert("Chyba při ukládání: " + error);
+                });
         }
     };
 
