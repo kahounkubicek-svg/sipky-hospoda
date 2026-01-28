@@ -60,13 +60,13 @@
             <div style="padding:20px;">
                 <input type="text" id="tournamentTitle" placeholder="Název turnaje" style="width:100%; margin-bottom:10px; background:#000; color:#fff; border:1px solid #333; padding:10px;">
                 <div id="attendanceList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
-                <button class="btn" style="margin-top:20px;" onclick="initTournament()">Zahájit hru</button>
+                <button class="btn" style="margin-top:20px;" onclick="initTournament()">Zahájit turnaj)</button>
             </div>
         </div>
         <div id="battleCard" class="card" style="display:none;">
             <div class="card-header"><h2 id="activeTourneyTitle">Turnaj</h2><span id="roundBadge" style="background:var(--accent); color:#000; padding:2px 10px; border-radius:15px; font-weight:bold; font-size:0.75rem;"></span></div>
             <div id="battleList"></div>
-            <button class="btn" style="margin:20px; width:calc(100% - 40px); background:#22c55e;" onclick="handleNext()">Ukončit kolo / turnaj</button>
+            <button id="nextBtn" class="btn" style="margin:20px; width:calc(100% - 40px); background:#22c55e;" onclick="handleNext()">Ukončit kolo</button>
         </div>
     </div>
 
@@ -173,7 +173,7 @@
         window.tourney.players = Array.from(sel).map(c => ({ name: c.dataset.p, team: c.dataset.t, total: 0, rounds: [0,0,0] }));
         window.tourney.round = 1;
         
-        // ZAPNUTÍ LIVE STATUSU - ODESLÁNÍ
+        // ZAPNUTÍ LIVE STATUSU
         update(ref(fdb, 'darts_v15/status'), { active: true });
         
         generateFairRound();
@@ -202,6 +202,12 @@
         document.getElementById('battleCard').style.display = 'block';
         document.getElementById('activeTourneyTitle').innerText = window.tourney.title;
         document.getElementById('roundBadge').innerText = `KOLO ${window.tourney.round} / 3`;
+        
+        // --- ZMĚNA TEXTU TLAČÍTKA DLE KOLA ---
+        const btn = document.getElementById('nextBtn');
+        btn.innerText = window.tourney.round < 3 ? "Ukončit kolo" : "Ukončit turnaj";
+        // -------------------------------------
+
         document.getElementById('battleList').innerHTML = window.tourney.games.map((g, gi) => `
             <div style="background:#111; padding:5px 20px; font-size:0.7rem; color:var(--accent); margin-top:10px;">HRA ${g.id}</div>
             ${g.matches.map((m, mi) => `<div class="match-line" onclick="openScore(${gi},${mi})">
@@ -235,7 +241,7 @@
         });
     }
 
-    // --- KLÍČOVÁ OPRAVA UKLÁDÁNÍ ---
+    // --- ATOIMICKÉ UKLÁDÁNÍ HISTORIE ---
     window.handleNext = () => {
         if(window.tourney.round < 3) { 
             window.tourney.round++; 
@@ -243,7 +249,6 @@
         } else {
             if(!confirm("Ukončit celý turnaj a uložit do historie?")) return;
             
-            // 1. Připravíme kompletní nový seznam historie
             const newHistoryItem = { 
                 id: Date.now(), 
                 title: window.tourney.title, 
@@ -252,20 +257,18 @@
             };
             const updatedHistoryList = [...window.historyData, newHistoryItem];
             
-            // 2. Připravíme "Atomický update" - vše se uloží najednou
             const updates = {};
             updates['darts_v15/history'] = updatedHistoryList;
             updates['darts_v15/status'] = { active: false };
             updates['darts_v15/liveMatch'] = null;
 
-            // 3. Odešleme a POČKÁME na potvrzení
             update(ref(fdb), updates)
                 .then(() => {
-                    alert("✅ ULOŽENO! Turnaj je v historii.");
+                    alert("Turnaj byl úspěšně uložen!");
                     location.reload();
                 })
                 .catch((error) => {
-                    alert("❌ CHYBA: " + error);
+                    alert("Chyba při ukládání: " + error);
                 });
         }
     };
@@ -300,4 +303,3 @@
 </script>
 </body>
 </html>
-
