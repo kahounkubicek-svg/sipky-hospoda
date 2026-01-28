@@ -28,6 +28,8 @@
         .modal.open { display: flex; }
         .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 25px; width: 90%; max-width: 450px; text-align: center; }
         .player-tag { display: inline-flex; align-items: center; background: #262626; padding: 4px 10px; border-radius: 4px; margin: 4px; font-size: 0.8rem; }
+        .add-player-box { display: flex; gap: 8px; margin: 10px 20px 20px; }
+        .add-player-box input { flex: 1; background: #000; border: 1px solid #333; color: #fff; padding: 8px; border-radius: 4px; }
         .sub-badge { font-size: 0.6rem; background: #333; color: var(--accent); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--accent); margin-left: 5px; }
         
         /* Grid pro Leaderboard */
@@ -171,7 +173,7 @@
         window.tourney.players = Array.from(sel).map(c => ({ name: c.dataset.p, team: c.dataset.t, total: 0, rounds: [0,0,0] }));
         window.tourney.round = 1;
         
-        // ZAPNUTÍ LIVE STATUSU
+        // ZAPNUTÍ LIVE STATUSU - ODESLÁNÍ
         update(ref(fdb, 'darts_v15/status'), { active: true });
         
         generateFairRound();
@@ -233,7 +235,7 @@
         });
     }
 
-    // !!! OPRAVENÁ FUNKCE UKONČENÍ TURNAJE (ŘEŠÍ TVŮJ PROBLÉM) !!!
+    // --- KLÍČOVÁ OPRAVA UKLÁDÁNÍ ---
     window.handleNext = () => {
         if(window.tourney.round < 3) { 
             window.tourney.round++; 
@@ -241,26 +243,29 @@
         } else {
             if(!confirm("Ukončit celý turnaj a uložit do historie?")) return;
             
-            // 1. Přidat do lokální historie
-            window.historyData.push({ 
+            // 1. Připravíme kompletní nový seznam historie
+            const newHistoryItem = { 
                 id: Date.now(), 
                 title: window.tourney.title, 
                 date: new Date().toLocaleDateString(), 
-                results: [...window.tourney.players] 
-            });
+                results: window.tourney.players 
+            };
+            const updatedHistoryList = [...window.historyData, newHistoryItem];
             
-            // 2. Vypnout live status v DB
-            update(ref(fdb, 'darts_v15/status'), { active: false });
-            set(ref(fdb, 'darts_v15/liveMatch'), null);
-            
-            // 3. Uložit historii do DB a POČKAT na potvrzení
-            set(ref(fdb, 'darts_v15/history'), window.historyData)
+            // 2. Připravíme "Atomický update" - vše se uloží najednou
+            const updates = {};
+            updates['darts_v15/history'] = updatedHistoryList;
+            updates['darts_v15/status'] = { active: false };
+            updates['darts_v15/liveMatch'] = null;
+
+            // 3. Odešleme a POČKÁME na potvrzení
+            update(ref(fdb), updates)
                 .then(() => {
-                    alert("Turnaj byl úspěšně uložen!");
-                    location.reload(); // Až teď obnovíme stránku
+                    alert("✅ ULOŽENO! Turnaj je v historii.");
+                    location.reload();
                 })
                 .catch((error) => {
-                    alert("Chyba při ukládání: " + error);
+                    alert("❌ CHYBA: " + error);
                 });
         }
     };
