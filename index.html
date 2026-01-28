@@ -3,222 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DartMaster ADMIN</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <title>BOREK ORIGINAL | ZÁPISY ZAPASŮ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #e63946; --bg: #0a0a0a; --card: #141414; --border: #262626; --text: #ffffff; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 40px; }
-        
-        nav { background: #000; padding: 15px; display: flex; gap: 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-        nav span { cursor: pointer; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; color: #888; }
-        nav span.active { color: var(--primary); }
-
-        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+        :root { --bg: #0a0a0a; --card: #141414; --border: #262626; --primary: #e63946; --accent: #ffcc00; --text: #ffffff; --dim: #a0a0a0; --success: #22c55e; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+        nav { background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; gap: 20px; height: 60px; align-items: center; position: sticky; top: 0; z-index: 1000; overflow-x: auto; }
+        nav span { color: var(--dim); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; cursor: pointer; white-space: nowrap; letter-spacing: 1px; }
+        nav span.active-tab { color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 5px; }
+        .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; }
         .view { display: none; }
-        .view.active { display: block; }
-
-        .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
-        h3 { margin-top: 0; font-weight: 800; text-transform: uppercase; font-size: 0.9rem; color: #888; }
-
-        input { background: #000; color: #fff; border: 1px solid var(--border); padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; font-size: 1rem; }
-        .btn { background: var(--primary); color: #fff; border: none; padding: 14px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; }
-        
-        .item-line { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; }
-        .player-row { cursor: pointer; transition: 0.2s; }
-        .player-row:hover { background: #1a1a1a; }
-
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; }
+        .active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; } }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .card-header { padding: 15px 20px; background: #1c1c1c; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .card-header h2 { margin: 0; font-size: 0.85rem; color: var(--accent); text-transform: uppercase; }
+        .match-line { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border); transition: 0.2s; cursor: pointer; }
+        .match-line:hover { background: #1a1a1a; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; transition: 0.2s; }
+        .btn:hover { filter: brightness(1.2); }
+        .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--dim); }
+        .score-cell { font-family: 'JetBrains Mono', monospace; color: var(--success); font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #181818; padding: 10px 20px; text-align: left; font-size: 0.7rem; color: var(--dim); text-transform: uppercase; }
+        td { padding: 12px 20px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
         .modal.open { display: flex; }
-        .modal-content { background: var(--card); padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; border: 1px solid var(--border); }
+        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 25px; width: 90%; max-width: 450px; text-align: left; max-height: 80vh; overflow-y: auto; }
+        .player-tag { display: inline-flex; align-items: center; background: #262626; padding: 4px 10px; border-radius: 4px; margin: 4px; font-size: 0.8rem; }
+        .player-tag span { cursor: pointer; margin-left: 8px; color: var(--primary); font-weight: bold; }
+        .add-player-box { display: flex; gap: 8px; margin-top: 10px; padding: 0 15px 15px 15px; }
+        .add-player-box input { flex: 1; background: #000; border: 1px solid #333; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 0.8rem; }
+        .add-player-box button { width: auto; padding: 6px 12px; font-size: 0.8rem; }
+        .sub-badge { font-size: 0.6rem; background: #333; color: var(--accent); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--accent); margin-left: 5px; }
+        .detail-row { display: flex; justify-content: space-between; font-size: 0.8rem; padding: 8px 0; border-bottom: 1px solid #222; }
     </style>
 </head>
 <body>
 
 <nav>
-    <span onclick="v('setup')" id="n-setup" class="active">Nastavení</span>
-    <span onclick="v('play')" id="n-play">Zápas</span>
-    <span onclick="v('history')" id="n-history">Historie</span>
+    <span onclick="showView('setupView')" id="nav-setup">⚙️ Týmy</span>
+    <span onclick="showView('playView')" id="nav-play">🎯 Turnaj</span>
+    <span onclick="showView('historyView')" id="nav-history">📊 Žebříček</span>
+    <span onclick="showView('archiveView')" id="nav-archive">📜 Historie</span>
 </nav>
 
 <div class="container">
-    <div id="setup" class="view active">
-        <div class="card">
-            <h3>Nový tým</h3>
-            <input type="text" id="tName" placeholder="Název týmu">
-            <input type="text" id="pNames" placeholder="Hráči (oddělit čárkou)">
-            <button class="btn" onclick="addTeam()">Uložit tým</button>
-        </div>
-        <div id="dbList"></div>
+    <div id="setupView" class="view active">
+        <div class="card"><div class="card-header"><h2>Nový tým</h2></div><div style="padding:20px;"><input type="text" id="tName" placeholder="Název týmu" style="width:100%; margin-bottom:10px; background:#000; color:#fff; border:1px solid #333; padding:10px;"><input type="text" id="pNames" placeholder="Hráči (oddělit čárkou)" style="width:100%; margin-bottom:10px; background:#000; color:#fff; border:1px solid #333; padding:10px;"><button class="btn" onclick="addTeam()">Vytvořit tým</button></div></div>
+        <div class="card"><div class="card-header"><h2>Registrované týmy</h2></div><div id="dbList"></div></div>
     </div>
 
-    <div id="play" class="view">
-        <div id="prezence" class="card">
-            <h3>Spustit nový zápas</h3>
-            <input type="text" id="tourneyTitle" placeholder="Název turnaje">
-            <div id="attList" style="margin: 15px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-            <button class="btn" onclick="startTourney()">Zahájit a vysílat live</button>
-        </div>
-
-        <div id="battle" class="view">
-            <div class="card">
-                <h2 id="bTitle" style="margin:0 0 20px 0; font-weight:900;"></h2>
-                <div id="battleList"></div>
-                <button class="btn" style="margin-top:20px; background:#22c55e;" onclick="finishTourney()">Ukončit a uložit turnaj</button>
+    <div id="playView" class="view">
+        <div id="prezenceCard" class="card">
+            <div class="card-header"><h2>Příprava turnaje</h2></div>
+            <div style="padding:20px;">
+                <input type="text" id="tournamentTitle" placeholder="Název turnaje" style="width:100%; margin-bottom:10px; background:#000; color:#fff; border:1px solid #333; padding:10px;">
+                <div id="attendanceList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
+                <button class="btn" style="margin-top:20px;" onclick="initTournament()">Zahájit Battle Mix (3 kola)</button>
             </div>
         </div>
+        <div id="battleCard" class="card" style="display:none;">
+            <div class="card-header"><h2 id="activeTourneyTitle">Turnaj</h2><span id="roundBadge" style="background:var(--accent); color:#000; padding:2px 10px; border-radius:15px; font-weight:bold; font-size:0.75rem;"></span></div>
+            <div id="battleList"></div>
+            <button class="btn" style="margin:20px; width:calc(100% - 40px);" onclick="handleNext()">Další krok</button>
+        </div>
     </div>
 
-    <div id="history" class="view">
-        <div id="historyLog"></div>
+    <div id="historyView" class="view">
+        <div class="dashboard-grid">
+            <div class="card"><div class="card-header"><h2>Pořadí Hráčů</h2></div><table id="pBoard"></table></div>
+            <div class="card"><div class="card-header"><h2>Pořadí Týmů (Top 3)</h2></div><table id="tBoard"></table></div>
+        </div>
+    </div>
+
+    <div id="archiveView" class="view">
+        <div id="historyLog" class="card"></div>
     </div>
 </div>
 
+<div id="detailModal" class="modal">
+    <div class="modal-content"><h2 id="detailTitle" style="color:var(--accent); margin-top:0;">Detail</h2><div id="detailBody"></div><button class="btn" style="margin-top:20px;" onclick="closeModal('detailModal')">Zavřít</button></div>
+</div>
+
 <div id="scoreModal" class="modal">
-    <div class="modal-content">
-        <h2 id="curPName" style="margin:0 0 20px 0;"></h2>
-        <label style="font-size:0.8rem; color:#888;">1. KOLO</label><input type="number" id="s1">
-        <label style="font-size:0.8rem; color:#888;">2. KOLO</label><input type="number" id="s2">
-        <label style="font-size:0.8rem; color:#888;">3. KOLO</label><input type="number" id="s3">
-        <button class="btn" onclick="saveScore()">Uložit body</button>
-        <button class="btn" style="background:transparent; color:#888; margin-top:10px;" onclick="closeM()">Zrušit</button>
+    <div class="modal-content" style="text-align:center;"><h3 id="mName">Hráč</h3>
+        <label style="color:var(--dim); font-size:0.8rem;">BODY ZA TOTO KOLO:</label>
+        <input type="number" id="finalScore" placeholder="Skóre" style="font-size:2.5rem; width:100%; text-align:center; background:#000; color:#fff; border:1px solid #333; margin:20px 0;">
+        <button class="btn" onclick="saveScore()">ULOŽIT</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    const firebaseConfig = { databaseURL: "https://sipky-hospoda-default-rtdb.europe-west1.firebasedatabase.app/" };
+    const firebaseConfig = { databaseURL: "https://sipky-hospoda-default-rtdb.europe-west1.firebasedatabase.app/", };
     const app = initializeApp(firebaseConfig);
     const fdb = getDatabase(app);
 
-    window.db = []; window.historyData = []; window.activeMatch = null;
+    window.db = []; window.historyData = []; window.tourney = { title: "", round: 1, players: [], games: [] };
+    window.curIdx = null;
 
-    onValue(ref(fdb, 'darts_v15/'), (s) => {
-        const d = s.val();
-        if(d) { 
-            window.db = d.db || []; 
-            window.historyData = d.history || [];
-            // Pokud existuje liveMatch v DB, načteme ho, aby se neztratil při refreshu
-            if(d.liveMatch) window.activeMatch = d.liveMatch;
-            renderDB(); renderHistory(); renderAtt();
-            if(window.activeMatch) showBattle();
+    function syncToFirebase() {
+        set(ref(fdb, 'darts_v15/db'), window.db);
+        set(ref(fdb, 'darts_v15/history'), window.historyData);
+    }
+
+    onValue(ref(fdb, 'darts_v15/'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            window.db = data.db || [];
+            window.historyData = data.history || [];
+            renderDB(); renderLeaderboards(); renderHistoryLog(); renderAttendance();
         }
     });
 
-    window.v = (id) => {
-        document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
-        document.querySelectorAll('nav span').forEach(e => e.classList.remove('active'));
+    window.showView = (id) => {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('nav span').forEach(s => s.classList.remove('active-tab'));
         document.getElementById(id).classList.add('active');
-        document.getElementById('n-'+id).classList.add('active');
+        document.getElementById('nav-' + id.replace('View','')).classList.add('active-tab');
     };
 
     window.addTeam = () => {
         const n = document.getElementById('tName').value;
         const p = document.getElementById('pNames').value.split(',').map(x => x.trim()).filter(x => x);
-        if(!n || p.length === 0) return;
-        window.db.push({ name: n, players: p });
-        set(ref(fdb, 'darts_v15/db'), window.db);
+        if(!n || p.length < 1) return;
+        window.db.push({ name: n, players: p }); syncToFirebase();
+        document.getElementById('tName').value = ''; document.getElementById('pNames').value = '';
     };
+
+    window.addPlayerToTeam = (teamIdx) => {
+        const name = document.getElementById(`newPlayer_${teamIdx}`).value.trim();
+        if (name) { window.db[teamIdx].players.push(name); syncToFirebase(); }
+    };
+
+    window.removePlayer = (tI, pI) => { if(confirm("Smazat?")) { window.db[tI].players.splice(pI, 1); syncToFirebase(); } };
+    window.deleteTeam = (i) => { if(confirm("Smazat tým?")) { window.db.splice(i,1); syncToFirebase(); } };
 
     window.renderDB = () => {
         document.getElementById('dbList').innerHTML = window.db.map((t, i) => `
-            <div class="card">
-                <div style="display:flex; justify-content:space-between;">
-                    <strong>${t.name}</strong>
-                    <span style="color:var(--primary); cursor:pointer;" onclick="delTeam(${i})">Smazat</span>
+            <div style="border-bottom: 1px solid #222;">
+                <div class="match-line" style="border-bottom: none; padding-bottom: 5px; cursor:default;">
+                    <span><strong>${t.name}</strong></span>
+                    <button class="btn btn-ghost" style="width:auto; border:none; color:var(--primary);" onclick="deleteTeam(${i})">Smazat</button>
                 </div>
-                <small style="color:#888;">${t.players.join(', ')}</small>
+                <div style="padding: 0 20px 5px 20px;">${t.players.map((p, pi) => `<div class="player-tag">${p}<span onclick="removePlayer(${i}, ${pi})">×</span></div>`).join('')}</div>
+                <div class="add-player-box"><input type="text" id="newPlayer_${i}" placeholder="Jméno"><button class="btn" onclick="addPlayerToTeam(${i})">Přidat</button></div>
             </div>`).join('');
     };
 
-    window.delTeam = (i) => { if(confirm("Smazat tým?")) { window.db.splice(i,1); set(ref(fdb, 'darts_v15/db'), window.db); }};
-
-    window.renderAtt = () => {
-        document.getElementById('attList').innerHTML = window.db.flatMap(t => t.players.map(p => `
-            <label style="display:block; padding:10px; background:#1a1a1a; border-radius:6px;">
-                <input type="checkbox" class="a-ch" data-p="${p}" data-t="${t.name}"> ${p}
+    window.renderAttendance = () => {
+        document.getElementById('attendanceList').innerHTML = window.db.flatMap(team => team.players.map(p => `
+            <label style="background:#1c1c1c; padding:10px; border-radius:8px; border:1px solid #333; cursor:pointer; font-size:0.8rem;">
+                <input type="checkbox" class="att-check" data-p="${p}" data-t="${team.name}"> ${p}
             </label>`)).join('');
     };
 
-    window.startTourney = () => {
-        const sel = document.querySelectorAll('.a-ch:checked');
-        if(sel.length < 1) return alert("Vyber hráče!");
-        window.activeMatch = { 
-            id: "live", 
-            title: document.getElementById('tourneyTitle').value || "Probíhající zápas", 
-            date: "PRÁVĚ SE HRAJE",
-            results: Array.from(sel).map(c => ({ name: c.dataset.p, team: c.dataset.t, rounds: [0,0,0], total: 0, done: false }))
-        };
-        update(ref(fdb, 'darts_v15/status'), { active: true });
-        updateLive();
-        showBattle();
+    window.initTournament = () => {
+        const sel = document.querySelectorAll('.att-check:checked');
+        if(sel.length < 2) return alert("Vyberte hráče!");
+        window.tourney.title = document.getElementById('tournamentTitle').value || "Turnaj " + new Date().toLocaleDateString();
+        window.tourney.players = Array.from(sel).map(c => ({ name: c.dataset.p, team: c.dataset.t, total: 0, rounds: [0,0,0] }));
+        window.tourney.round = 1;
+        set(ref(fdb, 'darts_v15/status'), { active: true });
+        generateFairRound();
     };
 
-    function showBattle() {
-        document.getElementById('prezence').style.display = 'none';
-        document.getElementById('battle').classList.add('active');
-        renderBattle();
+    function generateFairRound() {
+        let tMap = {};
+        window.tourney.players.forEach(p => { if(!tMap[p.team]) tMap[p.team] = []; tMap[p.team].push(p); });
+        Object.keys(tMap).forEach(t => tMap[t].sort(() => Math.random() - 0.5));
+        let maxG = Math.max(...Object.values(tMap).map(l => l.length));
+        window.tourney.games = [];
+        for(let i=0; i < maxG; i++) {
+            let matches = [];
+            Object.keys(tMap).forEach(tn => {
+                let p = tMap[tn][i] || tMap[tn][Math.floor(Math.random()*tMap[tn].length)];
+                matches.push({ ...p, isSub: !tMap[tn][i], done: false, score: 0 });
+            });
+            window.tourney.games.push({ id: i+1, matches });
+        }
+        updateLive(); renderRound();
     }
 
-    function renderBattle() {
-        document.getElementById('bTitle').innerText = window.activeMatch.title;
-        document.getElementById('battleList').innerHTML = window.activeMatch.results.map((p, i) => `
-            <div class="item-line player-row" onclick="openS(${i})">
-                <span>${p.name} <small style="color:#666">(${p.team})</small></span>
-                <strong style="color:var(--primary)">${p.total}</strong>
-            </div>`).join('');
+    function renderRound() {
+        document.getElementById('prezenceCard').style.display = 'none';
+        document.getElementById('battleCard').style.display = 'block';
+        document.getElementById('activeTourneyTitle').innerText = window.tourney.title;
+        document.getElementById('roundBadge').innerText = `KOLO ${window.tourney.round} / 3`;
+        document.getElementById('battleList').innerHTML = window.tourney.games.map((g, gi) => `
+            <div class="game-block" style="padding:10px; background:#181818; border-bottom:1px solid #222;"><span style="font-size:0.65rem; color:var(--accent)">${g.id}. HRA</span>
+            ${g.matches.map((m, mi) => `<div class="match-line" onclick="openScore(${gi},${mi})"><span><strong>${m.team}</strong>: ${m.name}${m.isSub?'<span class="sub-badge">ZÁSKOK</span>':''}</span>
+            ${m.done ? `<span class="score-cell">${m.score}</span>` : `<span style="color:var(--dim)">Zadat</span>`}</div>`).join('')}</div>`).join('');
     }
 
-    window.openS = (i) => {
-        window.curIdx = i;
-        const p = window.activeMatch.results[i];
-        document.getElementById('curPName').innerText = p.name;
-        document.getElementById('s1').value = p.rounds[0];
-        document.getElementById('s2').value = p.rounds[1];
-        document.getElementById('s3').value = p.rounds[2];
-        document.getElementById('scoreModal').classList.add('open');
-    };
+    window.openScore = (g, m) => { window.curIdx = {g, m}; document.getElementById('mName').innerText = window.tourney.games[g].matches[m].name; document.getElementById('finalScore').value = ""; document.getElementById('scoreModal').classList.add('open'); };
+    window.closeModal = (id) => document.getElementById(id).classList.remove('open');
 
     window.saveScore = () => {
-        const r = [parseInt(document.getElementById('s1').value)||0, parseInt(document.getElementById('s2').value)||0, parseInt(document.getElementById('s3').value)||0];
-        const p = window.activeMatch.results[window.curIdx];
-        p.rounds = r; p.total = r[0] + r[1] + r[2]; p.done = true;
-        closeM();
-        updateLive();
-        renderBattle();
+        let v = parseInt(document.getElementById('finalScore').value) || 0;
+        let m = window.tourney.games[window.curIdx.g].matches[window.curIdx.m];
+        m.score = v; m.done = true;
+        if(!m.isSub) {
+            let p = window.tourney.players.find(x => x.name === m.name && x.team === m.team);
+            p.total += v; p.rounds[window.tourney.round - 1] = v;
+        }
+        updateLive(); closeModal('scoreModal'); renderRound();
     };
 
     function updateLive() {
-        set(ref(fdb, 'darts_v15/liveMatch'), window.activeMatch);
+        set(ref(fdb, 'darts_v15/liveMatch'), {
+            id: 'live',
+            title: window.tourney.title,
+            date: "ZÁPAS PROBÍHÁ",
+            results: window.tourney.players
+        });
     }
 
-    window.closeM = () => document.getElementById('scoreModal').classList.remove('open');
-
-    window.finishTourney = () => {
-        if(!confirm("Ukončit zápas a uložit do historie?")) return;
-        const finishedMatch = {...window.activeMatch, id: Date.now(), date: new Date().toLocaleDateString()};
-        window.historyData.push(finishedMatch);
-        
-        set(ref(fdb, 'darts_v15/history'), window.historyData);
-        set(ref(fdb, 'darts_v15/liveMatch'), null);
-        set(ref(fdb, 'darts_v15/status'), { active: false });
-        
-        location.reload();
+    window.handleNext = () => {
+        if(window.tourney.round < 3) { window.tourney.round++; generateFairRound(); }
+        else {
+            window.historyData.push({ id: Date.now(), title: window.tourney.title, date: new Date().toLocaleDateString(), results: [...window.tourney.players] });
+            set(ref(fdb, 'darts_v15/status'), { active: false });
+            set(ref(fdb, 'darts_v15/liveMatch'), null);
+            syncToFirebase(); location.reload();
+        }
     };
 
-    window.renderHistory = () => {
-        document.getElementById('historyLog').innerHTML = window.historyData.slice().reverse().map(h => `
-            <div class="card">
-                <div style="display:flex; justify-content:space-between;">
-                    <strong>${h.title}</strong>
-                    <span style="color:#e63946; cursor:pointer;" onclick="delH(${h.id})">Smazat</span>
-                </div>
-                <small style="color:#888;">${h.date}</small>
-            </div>`).join('');
+    window.renderLeaderboards = () => {
+        let ps = {}, ts = {};
+        window.historyData.forEach(h => {
+            let tr = {};
+            h.results.forEach(r => {
+                if(!ps[r.name]) ps[r.name] = { s: 0 }; ps[r.name].s += r.total;
+                if(!tr[r.team]) tr[r.team] = []; tr[r.team].push(r.total);
+            });
+            Object.keys(tr).forEach(t => { if(!ts[t]) ts[t] = { s: 0 }; ts[t].s += tr[t].sort((a,b)=>b-a).slice(0,3).reduce((a,b)=>a+b, 0); });
+        });
+        document.getElementById('pBoard').innerHTML = Object.entries(ps).sort((a,b)=>b[1].s-a[1].s).map(([n,d], i) => `<tr onclick="showDetail('${n}', true)"><td>${i+1}</td><td><strong>${n}</strong></td><td class="score-cell">${d.s}</td></tr>`).join('');
+        document.getElementById('tBoard').innerHTML = Object.entries(ts).sort((a,b)=>b[1].s-a[1].s).map(([n,d], i) => `<tr onclick="showDetail('${n}', false)"><td>${i+1}</td><td><strong>${n}</strong></td><td class="score-cell">${d.s}</td></tr>`).join('');
     };
 
-    window.delH = (id) => { if(confirm("Smazat z historie?")) { window.historyData = window.historyData.filter(x => x.id != id); set(ref(fdb, 'darts_v15/history'), window.historyData); }};
+    window.showDetail = (name, isPlayer) => {
+        let ps = {}, ts = {};
+        window.historyData.forEach(h => {
+            let tr = {};
+            h.results.forEach(r => {
+                if(!ps[r.name]) ps[r.name] = { h: [] }; ps[r.name].h.push({ n: h.title, d: h.date, s: r.total });
+                if(!tr[r.team]) tr[r.team] = []; tr[r.team].push(r.total);
+            });
+            Object.keys(tr).forEach(t => { if(!ts[t]) ts[t] = { h: [] }; let sum = tr[t].sort((a,b)=>b-a).slice(0,3).reduce((a,b)=>a+b, 0); ts[t].h.push({ n: h.title, d: h.date, s: sum }); });
+        });
+        let hist = isPlayer ? ps[name].h : ts[name].h;
+        document.getElementById('detailTitle').innerText = name;
+        document.getElementById('detailBody').innerHTML = hist.map(x => `<div class="detail-row"><span>${x.d} - ${x.n}</span><span class="score-cell">${x.s} b.</span></div>`).join('');
+        document.getElementById('detailModal').classList.add('open');
+    };
+
+    window.renderHistoryLog = () => {
+        document.getElementById('historyLog').innerHTML = window.historyData.slice().reverse().map(h => `<div class="match-line"><div><strong>${h.title}</strong><br><small>${h.date}</small></div><button class="btn btn-ghost" style="width:auto; border:none; color:var(--primary);" onclick="deleteHistory(${h.id})">🗑️</button></div>`).join('');
+    };
+
+    window.deleteHistory = (id) => { if(confirm("Smazat?")) { window.historyData = window.historyData.filter(h => h.id !== id); syncToFirebase(); } };
+    renderDB();
 </script>
 </body>
 </html>
