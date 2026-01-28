@@ -3,31 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DartMaster ADMIN | Zápis</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>DartMaster ADMIN</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #e63946; --bg: #0a0a0a; --card: #141414; --border: #262626; --text: #ffffff; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 40px; }
+        
         nav { background: #000; padding: 15px; display: flex; gap: 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
         nav span { cursor: pointer; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; color: #888; }
-        nav span.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
-        .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
-        .view { display: none; } .view.active { display: block; }
+        nav span.active { color: var(--primary); }
+
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+        .view { display: none; }
+        .view.active { display: block; }
+
         .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
-        input { background: #000; color: #fff; border: 1px solid var(--border); padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        .btn { background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; width: 100%; }
-        .match-line { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #222; cursor: pointer; }
+        h3 { margin-top: 0; font-weight: 800; text-transform: uppercase; font-size: 0.9rem; color: #888; }
+
+        input { background: #000; color: #fff; border: 1px solid var(--border); padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; font-size: 1rem; }
+        .btn { background: var(--primary); color: #fff; border: none; padding: 14px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; }
+        
+        .item-line { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; }
+        .player-row { cursor: pointer; transition: 0.2s; }
+        .player-row:hover { background: #1a1a1a; }
+
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; align-items: center; justify-content: center; }
         .modal.open { display: flex; }
-        .modal-content { background: var(--card); padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; }
+        .modal-content { background: var(--card); padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
 <nav>
-    <span onclick="v('setup')" id="n-setup" class="active">⚙️ Týmy</span>
-    <span onclick="v('play')" id="n-play">🎯 Hrát</span>
-    <span onclick="v('history')" id="n-history">📜 Historie</span>
+    <span onclick="v('setup')" id="n-setup" class="active">Nastavení</span>
+    <span onclick="v('play')" id="n-play">Zápas</span>
+    <span onclick="v('history')" id="n-history">Historie</span>
 </nav>
 
 <div class="container">
@@ -35,7 +45,7 @@
         <div class="card">
             <h3>Nový tým</h3>
             <input type="text" id="tName" placeholder="Název týmu">
-            <input type="text" id="pNames" placeholder="Hráči (čárka)">
+            <input type="text" id="pNames" placeholder="Hráči (oddělit čárkou)">
             <button class="btn" onclick="addTeam()">Uložit tým</button>
         </div>
         <div id="dbList"></div>
@@ -43,16 +53,17 @@
 
     <div id="play" class="view">
         <div id="prezence" class="card">
-            <h3>Příprava turnaje</h3>
-            <input type="text" id="tourneyTitle" placeholder="Název (Např. 2. Kolo ligy)">
-            <div id="attList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
-            <button class="btn" style="margin-top:20px" onclick="startTourney()">Zahájit zápas (3 kola)</button>
+            <h3>Spustit nový zápas</h3>
+            <input type="text" id="tourneyTitle" placeholder="Název turnaje">
+            <div id="attList" style="margin: 15px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+            <button class="btn" onclick="startTourney()">Zahájit a vysílat live</button>
         </div>
+
         <div id="battle" class="view">
             <div class="card">
-                <h2 id="bTitle"></h2>
+                <h2 id="bTitle" style="margin:0 0 20px 0; font-weight:900;"></h2>
                 <div id="battleList"></div>
-                <button class="btn" style="margin-top:20px" onclick="finishTourney()">Ukončit a odeslat online</button>
+                <button class="btn" style="margin-top:20px; background:#22c55e;" onclick="finishTourney()">Ukončit a uložit turnaj</button>
             </div>
         </div>
     </div>
@@ -64,12 +75,12 @@
 
 <div id="scoreModal" class="modal">
     <div class="modal-content">
-        <h3 id="curPName">Jméno</h3>
-        <label>1. Kolo:</label><input type="number" id="s1">
-        <label>2. Kolo:</label><input type="number" id="s2">
-        <label>3. Kolo:</label><input type="number" id="s3">
-        <button class="btn" onclick="saveScore()">ULOŽIT</button>
-        <button class="btn" style="background:#444; margin-top:10px" onclick="closeM()">ZAVŘÍT</button>
+        <h2 id="curPName" style="margin:0 0 20px 0;"></h2>
+        <label style="font-size:0.8rem; color:#888;">1. KOLO</label><input type="number" id="s1">
+        <label style="font-size:0.8rem; color:#888;">2. KOLO</label><input type="number" id="s2">
+        <label style="font-size:0.8rem; color:#888;">3. KOLO</label><input type="number" id="s3">
+        <button class="btn" onclick="saveScore()">Uložit body</button>
+        <button class="btn" style="background:transparent; color:#888; margin-top:10px;" onclick="closeM()">Zrušit</button>
     </div>
 </div>
 
@@ -87,8 +98,11 @@
         const d = s.val();
         if(d) { 
             window.db = d.db || []; 
-            window.historyData = d.history || []; 
-            renderDB(); renderHistory(); renderAtt(); 
+            window.historyData = d.history || [];
+            // Pokud existuje liveMatch v DB, načteme ho, aby se neztratil při refreshu
+            if(d.liveMatch) window.activeMatch = d.liveMatch;
+            renderDB(); renderHistory(); renderAtt();
+            if(window.activeMatch) showBattle();
         }
     });
 
@@ -102,39 +116,57 @@
     window.addTeam = () => {
         const n = document.getElementById('tName').value;
         const p = document.getElementById('pNames').value.split(',').map(x => x.trim()).filter(x => x);
+        if(!n || p.length === 0) return;
         window.db.push({ name: n, players: p });
-        sync();
+        set(ref(fdb, 'darts_v15/db'), window.db);
     };
 
-    function sync() { set(ref(fdb, 'darts_v15/db'), window.db); set(ref(fdb, 'darts_v15/history'), window.historyData); }
+    window.renderDB = () => {
+        document.getElementById('dbList').innerHTML = window.db.map((t, i) => `
+            <div class="card">
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>${t.name}</strong>
+                    <span style="color:var(--primary); cursor:pointer;" onclick="delTeam(${i})">Smazat</span>
+                </div>
+                <small style="color:#888;">${t.players.join(', ')}</small>
+            </div>`).join('');
+    };
 
-    window.renderDB = () => { document.getElementById('dbList').innerHTML = window.db.map((t, i) => `<div class="card"><strong>${t.name}</strong><br><small>${t.players.join(', ')}</small></div>`).join(''); };
+    window.delTeam = (i) => { if(confirm("Smazat tým?")) { window.db.splice(i,1); set(ref(fdb, 'darts_v15/db'), window.db); }};
 
-    window.renderAtt = () => { document.getElementById('attList').innerHTML = window.db.flatMap(t => t.players.map(p => `<label><input type="checkbox" class="a-ch" data-p="${p}" data-t="${t.name}"> ${p}</label>`)).join(''); };
+    window.renderAtt = () => {
+        document.getElementById('attList').innerHTML = window.db.flatMap(t => t.players.map(p => `
+            <label style="display:block; padding:10px; background:#1a1a1a; border-radius:6px;">
+                <input type="checkbox" class="a-ch" data-p="${p}" data-t="${t.name}"> ${p}
+            </label>`)).join('');
+    };
 
     window.startTourney = () => {
         const sel = document.querySelectorAll('.a-ch:checked');
-        if(sel.length < 1) return;
+        if(sel.length < 1) return alert("Vyber hráče!");
         window.activeMatch = { 
-            id: Date.now(), 
-            title: document.getElementById('tourneyTitle').value || "Turnaj", 
-            date: new Date().toLocaleDateString(),
+            id: "live", 
+            title: document.getElementById('tourneyTitle').value || "Probíhající zápas", 
+            date: "PRÁVĚ SE HRAJE",
             results: Array.from(sel).map(c => ({ name: c.dataset.p, team: c.dataset.t, rounds: [0,0,0], total: 0, done: false }))
         };
-        // ODESÍLÁME INFORMACI ŽE SE HRAJE
         update(ref(fdb, 'darts_v15/status'), { active: true });
-        
+        updateLive();
+        showBattle();
+    };
+
+    function showBattle() {
         document.getElementById('prezence').style.display = 'none';
         document.getElementById('battle').classList.add('active');
         renderBattle();
-    };
+    }
 
     function renderBattle() {
         document.getElementById('bTitle').innerText = window.activeMatch.title;
         document.getElementById('battleList').innerHTML = window.activeMatch.results.map((p, i) => `
-            <div class="match-line" onclick="openS(${i})">
-                <span>${p.name} (${p.team})</span>
-                <strong>${p.done ? p.total : 'Zadat'}</strong>
+            <div class="item-line player-row" onclick="openS(${i})">
+                <span>${p.name} <small style="color:#666">(${p.team})</small></span>
+                <strong style="color:var(--primary)">${p.total}</strong>
             </div>`).join('');
     }
 
@@ -152,24 +184,41 @@
         const r = [parseInt(document.getElementById('s1').value)||0, parseInt(document.getElementById('s2').value)||0, parseInt(document.getElementById('s3').value)||0];
         const p = window.activeMatch.results[window.curIdx];
         p.rounds = r; p.total = r[0] + r[1] + r[2]; p.done = true;
-        closeM(); renderBattle();
+        closeM();
+        updateLive();
+        renderBattle();
     };
+
+    function updateLive() {
+        set(ref(fdb, 'darts_v15/liveMatch'), window.activeMatch);
+    }
 
     window.closeM = () => document.getElementById('scoreModal').classList.remove('open');
 
     window.finishTourney = () => {
-        window.historyData.push(window.activeMatch);
-        sync();
+        if(!confirm("Ukončit zápas a uložit do historie?")) return;
+        const finishedMatch = {...window.activeMatch, id: Date.now(), date: new Date().toLocaleDateString()};
+        window.historyData.push(finishedMatch);
         
-        // ODESÍLÁME INFORMACI ŽE JE KONEC
-        update(ref(fdb, 'darts_v15/status'), { active: false });
+        set(ref(fdb, 'darts_v15/history'), window.historyData);
+        set(ref(fdb, 'darts_v15/liveMatch'), null);
+        set(ref(fdb, 'darts_v15/status'), { active: false });
         
         location.reload();
     };
 
-    function renderHistory() { document.getElementById('historyLog').innerHTML = window.historyData.slice().reverse().map(h => `<div class="card"><strong>${h.title}</strong> (${h.date}) <button onclick="delH(${h.id})">Smazat</button></div>`).join(''); }
-    
-    window.delH = (id) => { if(confirm("Smazat?")) { window.historyData = window.historyData.filter(x => x.id != id); sync(); } };
+    window.renderHistory = () => {
+        document.getElementById('historyLog').innerHTML = window.historyData.slice().reverse().map(h => `
+            <div class="card">
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>${h.title}</strong>
+                    <span style="color:#e63946; cursor:pointer;" onclick="delH(${h.id})">Smazat</span>
+                </div>
+                <small style="color:#888;">${h.date}</small>
+            </div>`).join('');
+    };
+
+    window.delH = (id) => { if(confirm("Smazat z historie?")) { window.historyData = window.historyData.filter(x => x.id != id); set(ref(fdb, 'darts_v15/history'), window.historyData); }};
 </script>
 </body>
 </html>
